@@ -53,9 +53,34 @@ curl --user uploader:upl04d3r --upload-file nais.yaml https://repo.adeo.no/repos
 
 # Deploy to preprod-fss 
 
-curl -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.preprod.local/depl
+curl -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.preprod.local/deploy
 
 # You might get some error here. Which brings us to FASIT part 1. 
+
+Your application needs to be registred in fasit. So head over to fasit.adeo.no 
+and create a application with the same name as $UNIQUENAME. 
+
+# Rerun your curl to the daemon. 
+
+You should get a respnse about kubernets resources being created. (deployment, secret, ingress, autoscaler)
+
+# Now for some kubectl commands. 
+
+kubectl context preprod-fss #Switch to the preprod-fss cluster. 
+kubectl config set-context preprod-fss --namespace=demo #Set namespace demo as the current namesspace
+kubectl get pod #Get all pods in the current context(cluster) and namespace dem.
+
+
+# You should see your pods but they are not in a Running state. Thats bad.
+kubectl describe pod "your-pod-name" #Gives you a list of events for your pod. And an indication of why the pod is failing.
+
+Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
+
+At this point I should probably say something about liveness and readyness.
+tldr; You application needs to respond with 200 at the default endpoints /isalive and /isready.
+
+
+
 
 
 
