@@ -76,13 +76,35 @@ kubectl describe pod "your-pod-name" #Gives you a list of events for your pod. A
 
 Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
 
-At this point I should probably say something about liveness and readyness.
+At this point I should probably say something about liveness, readyness and nais.yaml. 
 tldr; You application needs to respond with 200 at the default endpoints /isalive and /isready.
 
 
+# Open your favorite editor and implment a /isAlive and /isREeady which responds with a 200 OK.
+
+# Build application, tag application and push. Increment the version. 
+
+# Curl to naisd  using the new version number.
+
+# Your pods should be now in a running state. 
+
+# A few valuable  kubectl commands
+
+kubectl logs YOUR-POD-NAME
+kubectl top YOUR-POD_NAME
+kubectl get all -l app=$UNIQUENAME
+
+# But... where is my app running
+
+kubectl get ingress $UNIQUENAME should give you a hint.
+
+# Congratulations your app is now runing in NAIS.
+# At this point I should ask if there are any questions and perhaps talk about k8s resources.
+
+
+  
 
 
 
-
-
+ 
 
