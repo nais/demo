@@ -41,7 +41,22 @@ docker stop CONTAINER_ID or NAMES (from docker ps output)
 # Tag and push to internal NAV docker repo. 
 #You need a different $VERSION for each new version of the app.
 
-docker tag  $UNIQUENAME docker.adeo.no:5000/demo/$UNIQUENAME:$VERSION  && docker push docker.adeo.no:5000/demo/$UNIQUENAME:$VERSION 
+docker tag  $UNIQUENAME docker.adeo.no:5000/$UNIQUENAME:$VERSION  && docker push docker.adeo.no:5000/$UNIQUENAME:$VERSION 
+
+
+# Deploying to a NAIS cluster.
+
+Open nais.yaml and replace the image with your image
+
+# Push nais.yaml to a repository.
+curl --user uploader:upl04d3r --upload-file nais.yaml https://repo.adeo.no/repository/nais/$UNIQUENAME/$VERSION/nais.yaml
+
+# Deploy to preprod-fss 
+
+curl -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.preprod.local/depl
+
+# You might get some error here. Which brings us to FASIT part 1. 
+
 
 
 
