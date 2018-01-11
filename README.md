@@ -129,6 +129,90 @@ You might need to turn off SSL verification:
 
    At this point I should ask if there are any questions and perhaps talk about k8s resources.
 
+## Monitoring and logging 
+
+### Monitoring with Prometheus
+
+If your app provides Prometheus metrics. The platform will collect the metrics 
+and you will be able to visualize the metrics and set up alerts in grafana.
+Lets add some default metrics to your application. 
+
+ - Add the following compile dependencies to the demo application 
+ 
+        io.promeetheus:simpleclient_spring_boot:0.0.26
+        
+        io.promeetheus:simpleclient_hotspot:0.0.26
+ 
+ - Autoconfigure, enable a metrics endpoint and collect some metrics using the annotations
+ 
+        @EnablePrometheusEndpoint
+        
+        @EnableSpringBootMetricsCollector
+ 
+ - Turn of security for management endpoints( as well as making some security dudes scream)
+    
+        management:
+          security:
+            enabled: false
+    in application.yaml
+ 
+ - Run the demo app and verify that jvm metrics are collected:
+ 
+        localhost:8080/prometheus
+
+### Logging
+
+Log to stdout. And we will collect them for you and visualize them in Kibana.
+Log to stdout and in a json format and we will collect them, index them and provide even more powerful
+search and visualize capabilities in Kibana.
+
+ - Add a logstash json encoder to the application
+ 
+        runtime("net.logstash.logback:logstash-logback-encoder:4.10")
+ 
+ - Add the following logback.xml to the resources folder:
+ 
+        <configuration>
+            <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+            </appender>
+            <root level="info">
+                <appender-ref ref="stdout_json" />
+            </root>
+        </configuration>
+        
+  - Run the application and verify that you get some logs messages to stdout in json format.
+  
+
+### Putting it all together:
+
+   - Modify nais.yaml to enable prometheus scraping:
+   
+        prometheus: 
+          enabled: true
+          path: /prometheus
+
+   - Logging is enabled by default.
+   
+   - Build application, docker image and push your image and nais.yaml. Remember to increase version.
+   
+   - Deploy the new version.
+   
+   - Verify that your new version is up and running.
+   
+   - Checkout https://grafana.adeo.no/dashboard/db/nais-app-dashboard to verify that your metrics are being scraped
+   
+   - CHeckout https://kibana.adeo.no to verify that logs are being indexed.  
+ 
+    
+        
+ 
+        
+
+
+     
+ 
+    
 
   
 
