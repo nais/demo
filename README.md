@@ -21,11 +21,12 @@ You might need to turn off SSL verification:
 ## Building and running your application in Docker.
 
  - Build the app. As we are using a common docker daemon give your docker image a unique name.
+   You need a different $VERSION for each new version of the app.
 
     ``
-    ./gradlew build && docker build . -t $UNIQUENAME
+    ./gradlew build && docker build . -t docker.adeo.no:5000/$UNIQUENAME:$VERSION
     ``
- (or gradlew.bat for windows shells)
+    (or gradlew.bat for windows shells)
  
  - List your newly create docker image:
  
@@ -33,7 +34,7 @@ You might need to turn off SSL verification:
 
  - Run you docker image locally/remotely
 
-    `` docker run -d -p 8080 $UNIQUENAME ``
+    `` docker run -d -p 8080 docker.adeo.no:5000/$UNIQUENAME:$VERSION ``
 
     You should see your docker image running using 
 
@@ -48,72 +49,85 @@ You might need to turn off SSL verification:
     
  -  Stop your docker container 
 
-    `` docker stop CONTAINER_ID/NAME ``
+    `` docker stop CONTAINER_ID `` or 
+    `` docker stop CONTAINER_NAME``
 
+ - Push to internal NAV docker repo. 
 
-
-# Tag and push to internal NAV docker repo. 
-#You need a different $VERSION for each new version of the app.
-
-docker tag  $UNIQUENAME docker.adeo.no:5000/$UNIQUENAME:$VERSION  && docker push docker.adeo.no:5000/$UNIQUENAME:$VERSION 
+    `` docker push docker.adeo.no:5000/$UNIQUENAME:$VERSION `` 
 
 
 # Deploying to a NAIS cluster.
 
-Open nais.yaml and replace the image with your image
+ - Open nais.yaml and replace the image with your image
 
-# Push nais.yaml to a repository.
-curl --user uploader:upl04d3r --upload-file nais.yaml https://repo.adeo.no/repository/nais/$UNIQUENAME/$VERSION/nais.yaml
+ - Push nais.yaml to a repository.
+ 
+   `` curl --user uploader:upl04d3r --upload-file nais.yaml https://repo.adeo.no/repository/nais/$UNIQUENAME/$VERSION/nais.yaml ``
 
-# Deploy to preprod-fss 
+ - Deploy to preprod-fss
+ 
+    todo: Get a srv_user/pwd  
 
-curl -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.preprod.local/deploy
+    `` curl -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.preprod.local/deploy ``
+    
+     You might get a error here. Which brings us to FASIT part 1. 
 
-# You might get some error here. Which brings us to FASIT part 1. 
+ -  Your application needs to be registered in Fasit. So head over to fasit.adeo.no 
+    and create an application with the same name as $UNIQUENAME. 
 
-Your application needs to be registred in fasit. So head over to fasit.adeo.no 
-and create a application with the same name as $UNIQUENAME. 
+ -  Rerun your curl to the daemon. 
 
-# Rerun your curl to the daemon. 
+    You should get a response about kubernetes resources being created. (deployment, secret, ingress, autoscaler)
 
-You should get a respnse about kubernets resources being created. (deployment, secret, ingress, autoscaler)
+ - Lets check the status of your application.
+ 
+    Switch to the preprod-fss cluster:
+        
+        kubectl context preprod-fss  
+    
+    Set namespace demo as the current namesspace: 
+    
+        kubectl config set-context preprod-fss --namespace=demo  
+        
+    Get all pods in the current context(cluster) and namespace demo: 
+    
+        kubectl get pod 
+    
+    You should see your pods but they are not in a Running state. Thats bad.
+    You cab get list of events for your pod. And an indication of why the pod is failing:
+    
+        kubectl describe pod "your-pod-name"  
 
-# Now for some kubectl commands. 
+    Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
 
-kubectl context preprod-fss #Switch to the preprod-fss cluster. 
-kubectl config set-context preprod-fss --namespace=demo #Set namespace demo as the current namesspace
-kubectl get pod #Get all pods in the current context(cluster) and namespace dem.
+    At this point I should probably say something about liveness, readyness and nais.yaml. 
+    tldr; You application needs to respond with 200 at the default endpoints /isalive and /isready.
 
+  - Open your favorite editor and implment a /isAlive and /isREeady which responds with a 200 OK.
 
-# You should see your pods but they are not in a Running state. Thats bad.
-kubectl describe pod "your-pod-name" #Gives you a list of events for your pod. And an indication of why the pod is failing.
+  - Build application and push the new docker container as while as uploading nais.yaml. 
+    Increment the version. 
 
-Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
+  - Curl to naisd using the new version number.
 
-At this point I should probably say something about liveness, readyness and nais.yaml. 
-tldr; You application needs to respond with 200 at the default endpoints /isalive and /isready.
+  - Check the status of your pods. They should be now in a running state.
+    A few kubectl commands to check your pods.
+    
+        kubectl logs YOUR-POD-NAME
+    
+        kubectl top YOUR-POD_NAME
+        
+        kubectl get all -l app=$UNIQUENAME  
 
+ - But... where is my app running
+ 
+        kubectl get ingress $UNIQUENAME 
+   should give you a hint. 
 
-# Open your favorite editor and implment a /isAlive and /isREeady which responds with a 200 OK.
+   Congratulations your app is now running in NAIS.
 
-# Build application, tag application and push. Increment the version. 
-
-# Curl to naisd  using the new version number.
-
-# Your pods should be now in a running state. 
-
-# A few valuable  kubectl commands
-
-kubectl logs YOUR-POD-NAME
-kubectl top YOUR-POD_NAME
-kubectl get all -l app=$UNIQUENAME
-
-# But... where is my app running
-
-kubectl get ingress $UNIQUENAME should give you a hint.
-
-# Congratulations your app is now runing in NAIS.
-# At this point I should ask if there are any questions and perhaps talk about k8s resources.
+   At this point I should ask if there are any questions and perhaps talk about k8s resources.
 
 
   
