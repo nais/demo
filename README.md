@@ -63,7 +63,7 @@ You might need to turn off SSL verification:
 
  - Push nais.yaml to a repository.
  
-   `` curl --user uploader:upl04d3r --upload-file nais.yaml https://repo.adeo.no/repository/nais/$UNIQUENAME/$VERSION/nais.yaml ``
+   `` curl --user uploader:upl04d3r --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml ``
 
  - Deploy to preprod-fss
  
@@ -95,13 +95,14 @@ You might need to turn off SSL verification:
         kubectl get pod 
     
     You should see your pods but they are not in a Running state. Thats bad.
-    You cab get list of events for your pod. And an indication of why the pod is failing:
+    You can get list of events for your pod. And an indication of why the pod is failing:
     
         kubectl describe pod "your-pod-name"  
 
     Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
 
     At this point I should probably say something about liveness, readyness and nais.yaml. 
+
     tldr; You application needs to respond with 200 at the default endpoints /isalive and /isready.
 
   - Open your favorite editor and implment a /isAlive and /isREeady which responds with a 200 OK.
@@ -204,7 +205,7 @@ search and visualize capabilities in Kibana.
    
    - Checkout https://grafana.adeo.no/dashboard/db/nais-app-dashboard to verify that your metrics are being scraped
    
-   - CHeckout https://kibana.adeo.no to verify that logs are being indexed.  
+   - CHeckout https://logs.adeo.no to verify that logs are being indexed.  
  
 
 ## Fasit

@@ -1,1 +1,5 @@
-image: docker.adeo.no:5000/demo/demo-gtc
+image: docker.adeo.no:5000/gtc
+prometheus: 
+  enabled: true
+  path: /prometheus
+
