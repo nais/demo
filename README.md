@@ -135,7 +135,9 @@ You might need to turn off SSL verification:
 
 If your app provides Prometheus metrics. The platform will collect the metrics 
 and you will be able to visualize the metrics and set up alerts in grafana.
-Lets add some default metrics to your application. 
+We will also provide default dashboards for your application.
+
+Lets add some  metrics to your application. 
 
  - Add the following compile dependencies to the demo application 
  
@@ -188,9 +190,9 @@ search and visualize capabilities in Kibana.
 
    - Modify nais.yaml to enable prometheus scraping:
    
-        prometheus: 
-          enabled: true
-          path: /prometheus
+            prometheus: 
+              enabled: true
+              path: /prometheus
 
    - Logging is enabled by default.
    
@@ -204,7 +206,31 @@ search and visualize capabilities in Kibana.
    
    - CHeckout https://kibana.adeo.no to verify that logs are being indexed.  
  
-    
+
+## Fasit
+
+### Using/Exposing Fasit resources. 
+
+You can specify which Fasit resources your application is using and the platform will fetch the
+resources and inject them as environment variables into your pods.
+You can also expose resources. 
+
+
+   - In Fasit add a a resource to your application
+   
+   - Modify nais.yaml to consume/expose resources. See:
+   
+        https://github.com/nais/naisd/blob/master/nais_example.yaml
+        
+   - Build and deploy you application. 
+   
+   - Checkout the  /env endpoint to see environment variables available.
+   
+   - Check Fasit to see that your exposed resource has been created. 
+   
+
+  
+             
         
  
         
