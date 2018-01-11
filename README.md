@@ -229,7 +229,9 @@ You can also expose resources.
    - Check Fasit to see that your exposed resource has been created. 
    
 
-  
+## QA
+
+????  
              
         
  
