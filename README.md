@@ -81,7 +81,13 @@ You might need to turn off SSL verification:
 
     You should get a response about kubernetes resources being created. (deployment, secret, ingress, autoscaler)
 
- - Lets check the status of your application.
+ - Check the status of your deployment
+
+        curl -k https://daemon.nais.preprod.local/deploystatus/demo/$UNIQUENAME
+
+   Hmmm. 
+
+ - Lets debug the status of your application.
  
     Switch to the preprod-fss cluster:
         
