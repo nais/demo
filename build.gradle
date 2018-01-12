@@ -34,10 +34,6 @@ dependencies {
         exclude module: "spring-boot-starter-tomcat"
     }
     compile("org.springframework.boot:spring-boot-starter-jetty")
-    compile("io.prometheus:simpleclient_spring_boot:0.0.26")
-    compile("io.prometheus:simpleclient_hotspot:0.0.26")
-
-    runtime("net.logstash.logback:logstash-logback-encoder:4.10")
 
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
