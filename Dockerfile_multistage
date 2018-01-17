@@ -1,0 +1,13 @@
+# This is the build container
+FROM gradle:jdk8-alpine as gradle-host
+COPY build.gradle  /home/gradle/project/
+COPY src /home/gradle/project/src
+USER root
+WORKDIR /home/gradle/project/
+RUN  gradle build --stacktrace
+
+
+FROM navikt/java:8
+WORKDIR /app
+COPY --from=gradle-host /home/gradle/project/build/libs/demo-0.0.1.jar /app/app.jar
+
