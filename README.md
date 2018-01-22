@@ -64,7 +64,7 @@ You might need to turn off SSL verification:
 
  - Push nais.yaml to a repository.
  
-   `` curl -s -S --user uploader:upl04d3r --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml ``
+   `` curl -s -S --user uploader:<super_secret_pwd> --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml ``
 
  - Deploy to preprod-fss
  
