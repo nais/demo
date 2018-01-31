@@ -124,7 +124,7 @@ You might need to turn off SSL verification:
     
         kubectl logs YOUR-POD-NAME
     
-        kubectl top YOUR-POD_NAME
+        kubectl top pod
         
         kubectl get all -l app=$UNIQUENAME  
 
