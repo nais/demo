@@ -131,7 +131,7 @@ You might need to turn off SSL verification:
  - But... where is my app running
  
         kubectl get ingress $UNIQUENAME 
-   should give you a hint. 
+   should give you a hint. Notice that even if the ingress is exposing port 80, the app is behind a BigIP load balancer and can only be reached with HTTPS.
 
    Congratulations your app is now running in NAIS.
 
