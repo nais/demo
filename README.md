@@ -23,7 +23,7 @@ You might need to turn off SSL verification:
    You need a different $VERSION for each new version of the app.
 
     ``
-    ./gradlew build && docker build . -t docker.adeo.no:5000/$UNIQUENAME:$VERSION
+    ./gradlew build && docker build . -t repo.adeo.no:5433/$UNIQUENAME:$VERSION
     ``
     (or gradlew.bat for windows shells)
  
@@ -33,7 +33,7 @@ You might need to turn off SSL verification:
 
  - Run you docker image locally/remotely
 
-    `` docker run -d -p 8080 docker.adeo.no:5000/$UNIQUENAME:$VERSION ``
+    `` docker run -d -p 8080 repo.adeo.no:5433/$UNIQUENAME:$VERSION ``
 
     You should see your docker container running using 
 
@@ -53,20 +53,20 @@ You might need to turn off SSL verification:
 
  - Push to internal NAV docker repo. 
 
-    `` docker push docker.adeo.no:5000/$UNIQUENAME:$VERSION `` 
+    `` docker push repo.adeo.no:5433/$UNIQUENAME:$VERSION `` 
 
 
 # Deploying to a NAIS cluster.
 
  - Open nais.yaml and replace the image with your image
       
-       image: docker.adeo.no:5000/$UNIQUENAME
+       image: repo.adeo.no:5433/$UNIQUENAME
 
  - Push nais.yaml to a repository.
  
    `` curl -s -S --user uploader:<super_secret_pwd> --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml ``
 
- - Deploy to preprod-fss
+ - Deploy to preprod-sbs
  
     todo: Get a srv_user/pwd  
 
@@ -245,22 +245,3 @@ Service discovery internal/external.
 
 And maybe something about our plans/dreams.  Istio(J), persistence storage, databases(SQL/NOSQL) as a service, 
 Redis As A Service. XYZ as a service. 
-
-
-  
-             
-        
- 
-        
-
-
-     
- 
-    
-
-  
-
-
-
- 
-
