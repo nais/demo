@@ -70,7 +70,7 @@ You might need to turn off SSL verification:
  
     todo: Get a srv_user/pwd  
 
-    `` curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.oera-q.local/deploy ``
+    `` curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "sbs", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.oera-q.local/deploy ``
     
      You might get a error here. Which brings us to FASIT part 1. 
 
