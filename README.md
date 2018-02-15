@@ -23,7 +23,7 @@ You might need to turn off SSL verification:
    You need a different $VERSION for each new version of the app.
 
     ``
-    ./gradlew build && docker build . -t repo.adeo.no:5433/$UNIQUENAME:$VERSION
+    ./gradlew build && docker build . -t repo.adeo.no:5443/$UNIQUENAME:$VERSION
     ``
     (or gradlew.bat for windows shells)
  
@@ -33,7 +33,7 @@ You might need to turn off SSL verification:
 
  - Run you docker image locally/remotely
 
-    `` docker run -d -p 8080 repo.adeo.no:5433/$UNIQUENAME:$VERSION ``
+    `` docker run -d -p 8080 repo.adeo.no:5443/$UNIQUENAME:$VERSION ``
 
     You should see your docker container running using 
 
@@ -53,14 +53,14 @@ You might need to turn off SSL verification:
 
  - Push to internal NAV docker repo. 
 
-    `` docker push repo.adeo.no:5433/$UNIQUENAME:$VERSION `` 
+    `` docker push repo.adeo.no:5443/$UNIQUENAME:$VERSION `` 
 
 
 # Deploying to a NAIS cluster.
 
  - Open nais.yaml and replace the image with your image
       
-       image: repo.adeo.no:5433/$UNIQUENAME
+       image: repo.adeo.no:5443/$UNIQUENAME
 
  - Push nais.yaml to a repository.
  
