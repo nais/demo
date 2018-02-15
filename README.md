@@ -70,7 +70,7 @@ You might need to turn off SSL verification:
  
     todo: Get a srv_user/pwd  
 
-    `` curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.preprod.local/deploy ``
+    `` curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "environment": "t6", "zone": "fss", "namespace": "demo", "username": "brukernavn", "password": "passord"}' https://daemon.nais.oera-q.local/deploy ``
     
      You might get a error here. Which brings us to FASIT part 1. 
 
@@ -83,19 +83,19 @@ You might need to turn off SSL verification:
 
  - Check the status of your deployment
 
-        curl -k https://daemon.nais.preprod.local/deploystatus/demo/$UNIQUENAME
+        curl -k https://daemon.nais.oera-q.local/deploystatus/demo/$UNIQUENAME
 
    Hmmm. 
 
  - Lets debug the status of your application.
  
-    Switch to the preprod-fss cluster:
+    Switch to the preprod-sbs cluster:
         
-        kubectl config use-context preprod-fss  
+        kubectl config use-context preprod-sbs  
     
     Set namespace demo as the current namesspace: 
     
-        kubectl config set-context preprod-fss --namespace=demo  
+        kubectl config set-context preprod-sbs --namespace=demo  
         
     Get all pods in the current context(cluster) and namespace demo: 
     
