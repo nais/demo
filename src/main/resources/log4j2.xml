@@ -1,0 +1,28 @@
+<configuration>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%m%n%xEx"/>
+        </Console>
+
+        <Syslog name="auditLogger" format="RFC5424" host="audit.nais" port="6514"
+                protocol="TCP" appName="demo-log4j2" mdcId="mdc"
+                facility="USER" enterpriseNumber="1111" newLine="true"
+                messageId="Audit" id="App"
+                Layout="%m%n%xEx"
+        >
+        </Syslog>
+
+    </Appenders>
+
+    <Loggers>
+        <Logger name="auditLogger" level="info" additivity="false">
+            <AppenderRef ref="auditLogger"/>
+            <AppenderRef ref="console"/>
+        </Logger>
+
+        <Root level="warn">
+            <AppenderRef ref="console"/>
+        </Root>
+
+    </Loggers>
+</configuration>

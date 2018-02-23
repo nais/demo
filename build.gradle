@@ -28,17 +28,26 @@ repositories {
     }
 }
 
+configurations {
+    compile.exclude group:'ch.qos.logback'
+}
 
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web') {
-        exclude module: "spring-boot-starter-tomcat"
+        exclude module: "org.springframework.boot:spring-boot-starter-tomcat"
+        exclude module: "org.springframework.boot:spring-boot-starter-logging"
     }
-    compile("org.springframework.boot:spring-boot-starter-jetty")
+    compile("org.springframework.boot:spring-boot-starter-jetty") {
+        exclude module : "spring-boot-starter-logging"
+
+    }
     compile("io.prometheus:simpleclient_spring_boot:0.0.26")
     compile("io.prometheus:simpleclient_hotspot:0.0.26")
 
-    runtime("net.logstash.logback:logstash-logback-encoder:4.10")
-    runtime group: 'com.papertrailapp', name: 'logback-syslog4j', version: '1.0.0'
+    //log4j2 logging
+    runtime("org.springframework.boot:spring-boot-starter-log4j2")
+
+
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
 }
