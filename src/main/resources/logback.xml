@@ -1,8 +1,34 @@
 <configuration>
+
+
+    <!-- http://logback.qos.ch/manual/appenders.html#SyslogAppender -->
+    <appender name="auditLogger" class="com.papertrailapp.logback.Syslog4jAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%-5level %logger{35}: %m%n%xEx</pattern>
+        </layout>
+
+        <syslogConfig class="org.productivity.java.syslog4j.impl.net.tcp.TCPNetSyslogConfig">
+            <!-- remote system to log to -->
+            <host>audit.nais</host>
+            <!-- remote port to log to -->
+            <port>6514</port>
+            <!-- program name to log as -->
+            <ident>demo3</ident>
+            <!-- max log message length in bytes -->
+            <maxMessageLength>128000</maxMessageLength>
+        </syslogConfig>
+    </appender>
+
     <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
     </appender>
-    <root level="info">
+
+0    <logger level="INFO" name="auditLogger" additivity="false">
+        <appender-ref ref="auditLogger" />
+        <appender-ref ref="stdout_json" />
+    </logger>
+
+    <root level="INFO">
         <appender-ref ref="stdout_json" />
     </root>
 </configuration>
