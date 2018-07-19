@@ -135,11 +135,69 @@ Nå som vi har pushet manifestet nais.yaml og docker imaget til appen vår, er v
 curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "fasitEnvironment": "t6", "zone": "sbs", "fasitUsername": "brukernavn", "fasitPassword": "passord", "skipFasit": "true"}' https://daemon.nais.oera-q.local/deploy
 ```
 
-Sjekk statusen for deploymenten:
+You might get a error here. Which brings us to FASIT part 1. 
 
-```
-curl -k https://daemon.nais.oera-q.local/deploystatus/demo/$UNIQUENAME
-```
+ -  Your application needs to be registered in Fasit. So head over to fasit.adeo.no 
+    and create an application with the same name as $UNIQUENAME. 
+
+ -  Rerun your curl to the daemon. 
+
+    You should get a response about kubernetes resources being created. (deployment, secret, ingress, autoscaler)
+
+ - Check the status of your deployment
+
+        curl -k https://daemon.nais.oera-q.local/deploystatus/demo/$UNIQUENAME
+
+   Hmmm. 
+
+ - Lets debug the status of your application.
+ 
+    Switch to the preprod-sbs cluster:
+        
+        kubectl config use-context preprod-sbs  
+    
+    Set namespace demo as the current namesspace: 
+    
+        kubectl config set-context preprod-sbs --namespace=demo  
+        
+    Get all pods in the current context(cluster) and namespace demo: 
+    
+        kubectl get pod 
+    
+    You should see your pods but they are not in a Running state. Thats bad.
+    You can get list of events for your pod. And an indication of why the pod is failing:
+    
+        kubectl describe pod "your-pod-name"  
+
+    Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
+
+    At this point I should probably say something about liveness, readyness and nais.yaml. 
+
+    tldr; You application needs to respond with 200 at the default endpoints /isAlive and /isReady.
+
+  - Open your favorite editor and implment a /isAlive and a /isReady endpoint which responds with a 200 OK.
+
+  - Build the application and docker container. Push the new docker container and nais.yaml to their respective
+    repositories using curl. Remember to increment the version. 
+
+  - Deploy the new version to NAIS.
+
+  - Check the status of your pods. They should be now in a running state.
+    A few kubectl commands to check your pods.
+    
+        kubectl logs YOUR-POD-NAME
+    
+        kubectl top pod
+        
+        kubectl get all -l app=$UNIQUENAME  
+
+ - But... where is my app running
+ 
+        kubectl get ingress $UNIQUENAME 
+   should give you a hint. Notice that even if the ingress is exposing port 80, the app is behind a BigIP load balancer and can only be reached with HTTPS.
+
+   Congratulations your app is now running in NAIS.
+
 
 ## Monitoring and logging 
 
