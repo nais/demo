@@ -1,166 +1,170 @@
-# NAIS  101
+# NAIS 101
+
+Disse oppgavene tar deg gjennom de grunnleggende stegene for å deploye en applikasjon på NAIS.
+
+For å gjennomføre disse oppgavene kreves det at du har:
+
+- Installert i utviklerimaget:
+  - Docker
+  - Kubectl og tilgang til NAVs interne clustere
+- Tilgang til Fasit
+
+Følg skrittene her [https://confluence.adeo.no/pages/viewpage.action?pageId=259110874](https://confluence.adeo.no/pages/viewpage.action?pageId=259110874) om du ikke har dette installert på utvikler imaget ditt allerde.
+
+## Tilgang til preprod-clusteret
+
+Sjekk at du bruker `preprod`:
+
+```
+kubectl config use-context preprod-sbs
+```
 
 
-## Prerequisites
+List opp pods for å se at du er autentisert:
 
- - Docker
- - Kubectl and access to internal NAV clusters. 
- - Access to Fasit. 
+```
+kubectl get pods
+```
 
-## Setup 
+## Last ned kildekode
 
-``
+Last ned dette repoet på utviklerimaget ditt.
+
+```
 git clone https://github.com/nais/demo.git
-``
+```
 
-You might need to turn off SSL verification:
- 
-`` git config --global http.sslVerify false ``
+Det kan hende du må skru av SSL verification:
 
-## Building and running your application in Docker.
+```
+git config --global http.sslVerify false
+```
 
- - Build the app. As we are using a common docker daemon give your docker image a unique name.
-   You need a different $VERSION for each new version of the app.
+## Docker
 
-    ``
-    ./gradlew build && docker build . -t repo.adeo.no:5443/$UNIQUENAME:$VERSION
-    ``
-    (or gradlew.bat for windows shells)
- 
- - List your newly create docker image:
- 
-    `` docker images ``
+### Bygg image
 
- - Run you docker image locally/remotely
+Under [src/](./src) ligger det en liten applikasjon som vi vil bygge inn i et Docker image. Ta en titt på [Dockerfile](./Dockerfile) for å se hvordan det bygges.
 
-    `` docker run -d -p 8080 repo.adeo.no:5443/$UNIQUENAME:$VERSION ``
+Bygg appen:
 
-    You should see your docker container running using 
+```
+./gradlew build
+```
 
-    `` docker ps `` 
+Hvis du er på Windows image, kjør `gradlew.bat build` i stedet.
 
-    Note the portmapping  ``0.0.0.0:12345(random port) -> 8080 ``  for your container.
-    You should be able to browse to 
+Bygg Docker imaget, pass på å bytte ut `$UNIQUENAME` med noe du vil kalle appen og `$VERSION` med feks `1.0`.
 
-    `` http://e34apvl00253.devillo.no:12345/hello `` 
+```
+docker build . -t repo.adeo.no:5443/$UNIQUENAME:$VERSION
+```
 
-      Or `` localhost:12345 `` if running a local docker daemon.
-    
- -  Stop your docker container 
+Du skal nå ha et docker image tagget med Docker registrien vi skal laste det opp til. 
 
-    `` docker stop CONTAINER_ID `` or 
-    `` docker stop CONTAINER_NAME``
+List opp images for å se at det er lagd:
 
- - Push to internal NAV docker repo. 
+```
+docker images
+```
 
-    `` docker push repo.adeo.no:5443/$UNIQUENAME:$VERSION `` 
+### Test imaget
+Test imaget ditt:
 
+```
+docker run -d -p 8080 repo.adeo.no:5443/$UNIQUENAME:$VERSION
+```
 
-# Deploying to a NAIS cluster.
+Se at imaget ditt kjører ved:
 
- - Open nais.yaml and replace the image with your image
-      
-       image: repo.adeo.no:5443/$UNIQUENAME
+```
+docker ps
+```
 
- - Push nais.yaml to a repository.
- 
-   `` curl -s -S --user uploader:<super_secret_pwd> --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml ``
+Noter deg portmappingen (`0.0.0.0:12345(random port) -> 8080`) for containeren din. Denne må du bruke for å besøke applikasjonen i nettleseren:
 
- - Deploy to preprod-sbs
- 
-    todo: Get a srv_user/pwd  
+```
+http://e34apvl00253.devillo.no:PORT/hello
+```
 
-    `` curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "fasitEnvironment": "t6", "zone": "sbs", "namespace": "t6", "fasitUsername": "brukernavn", "fasitPassword": "passord"}' https://daemon.nais.oera-q.local/deploy ``
-    
-     You might get a error here. Which brings us to FASIT part 1. 
+Eller hvis du kjører en lokal Docker daemon:
 
- -  Your application needs to be registered in Fasit. So head over to fasit.adeo.no 
-    and create an application with the same name as $UNIQUENAME. 
+```
+localhost:PORT/hello
+```
 
- -  Rerun your curl to the daemon. 
+Stopp containeren din:
 
-    You should get a response about kubernetes resources being created. (deployment, secret, ingress, autoscaler)
+`docker stop CONTAINER_ID` eller `docker stop CONTAINER_NAME`
 
- - Check the status of your deployment
+## Push til internt NAV docker repo
 
-        curl -k https://daemon.nais.oera-q.local/deploystatus/demo/$UNIQUENAME
+```
+docker push repo.adeo.no:5443/$UNIQUENAME:$VERSION
+```
 
-   Hmmm. 
+## Deploye til NAIS
 
- - Lets debug the status of your application.
- 
-    Switch to the preprod-sbs cluster:
-        
-        kubectl config use-context preprod-sbs  
-    
-    Set namespace demo as the current namesspace: 
-    
-        kubectl config set-context preprod-sbs --namespace=demo  
-        
-    Get all pods in the current context(cluster) and namespace demo: 
-    
-        kubectl get pod 
-    
-    You should see your pods but they are not in a Running state. Thats bad.
-    You can get list of events for your pod. And an indication of why the pod is failing:
-    
-        kubectl describe pod "your-pod-name"  
+Nå som vi har bygd appen vår, vil vi kjøre den i et cluster også. For å gjøre dette må vi først endre på manifestet, `nais.yaml`, slik at denne beskriver appen vår.
 
-    Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
+### nais.yaml
 
-    At this point I should probably say something about liveness, readyness and nais.yaml. 
+Åpne nais.yaml og legg inn docker imaget ditt:
 
-    tldr; You application needs to respond with 200 at the default endpoints /isAlive and /isReady.
+```
+image: repo.adeo.no:5443/$UNIQUENAME
+```
 
-  - Open your favorite editor and implment a /isAlive and a /isReady endpoint which responds with a 200 OK.
+Legg inn team-navn (eks brukernavnet ditt):
 
-  - Build the application and docker container. Push the new docker container and nais.yaml to their respective
-    repositories using curl. Remember to increment the version. 
+```
+team: TEAMNAVN
+```
 
-  - Deploy the new version to NAIS.
+Fila nais.yaml må ligge et sted hvor naisd kan få tak i den for å deploye applikasjonen din. Push fila til repo.adeo.no:
 
-  - Check the status of your pods. They should be now in a running state.
-    A few kubectl commands to check your pods.
-    
-        kubectl logs YOUR-POD-NAME
-    
-        kubectl top pod
-        
-        kubectl get all -l app=$UNIQUENAME  
+```
+curl -s -S --user uploader:<super_secret_pwd> --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml
+```
 
- - But... where is my app running
- 
-        kubectl get ingress $UNIQUENAME 
-   should give you a hint. Notice that even if the ingress is exposing port 80, the app is behind a BigIP load balancer and can only be reached with HTTPS.
+### Deploy
 
-   Congratulations your app is now running in NAIS.
+Nå som vi har pushet manifestet nais.yaml og docker imaget til appen vår, er vi klare til å deploye. Dette gjør vi ved en POST request til naisd:
 
-   At this point I should ask if there are any questions and perhaps talk about k8s resources.
+```
+curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "fasitEnvironment": "t6", "zone": "sbs", "fasitUsername": "brukernavn", "fasitPassword": "passord", "skipFasit": "true"}' https://daemon.nais.oera-q.local/deploy
+```
+
+Sjekk statusen for deploymenten:
+
+```
+curl -k https://daemon.nais.oera-q.local/deploystatus/demo/$UNIQUENAME
+```
 
 ## Monitoring and logging 
 
 ### Monitoring with Prometheus
 
-If your app provides Prometheus metrics. The platform will collect the metrics 
+If your app provides Prometheus metrics. The platform will collect the metrics
 and you will be able to visualize the metrics and set up alerts in grafana.
 We will also provide default dashboards for your application.
 
-Lets add some  metrics to your application. 
+Lets add some  metrics to your application.
 
  - Add the following compile dependencies to the demo application. In build.gradle:
  
        compile("io.prometheus:simpleclient_spring_boot:0.0.26")
-    
+
        compile("io.prometheus:simpleclient_hotspot:0.0.26")
-        
+
  
  - Autoconfigure, enable a metrics endpoint and collect some metrics using by annotating the main class
    with the following annotations.
  
         @EnablePrometheusEndpoint
-        
+
         @EnableSpringBootMetricsCollector
-        
+
  
  - Run the demo app and verify that jvm metrics are collected:
  
@@ -177,7 +181,7 @@ search and visualize capabilities in Kibana.
         runtime("net.logstash.logback:logstash-logback-encoder:4.10")
  
  - Add the following logback.xml to the resources folder:
- 
+
         <configuration>
             <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
                 <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
@@ -186,31 +190,30 @@ search and visualize capabilities in Kibana.
                 <appender-ref ref="stdout_json" />
             </root>
         </configuration>
-        
+
   - Run the application and verify that you get some logs messages to stdout in json format.
-  
 
 ### Putting it all together:
 
    - Modify nais.yaml to enable prometheus scraping:
-   
+
          image: docker.adeo.no:5000/$UNIQUENAME
          prometheus: 
            enabled: true
            path: /prometheus
 
    - Logging is enabled by default.
-   
+
    - Build application, docker image and push your image and nais.yaml. Remember to increase version.
-   
+
    - Deploy the new version.
-   
+
    - Verify that your new version is up and running.
-   
+
    - Checkout https://grafana.adeo.no/dashboard/db/nais-app-dashboard to verify that your metrics are being scraped
-   
-   - CHeckout https://logs.adeo.no to verify that logs are being indexed.  
- 
+
+   - CHeckout https://logs.adeo.no to verify that logs are being indexed.
+
 
 ## Fasit
 
@@ -218,30 +221,27 @@ search and visualize capabilities in Kibana.
 
 You can specify which Fasit resources your application is using and the platform will fetch the
 resources and inject them as environment variables into your pods.
-You can also expose resources. 
+You can also expose resources.
 
 
    - In Fasit add a a resource to your application
-   
+
    - Modify nais.yaml to consume/expose resources. See:
-   
+
         https://github.com/nais/naisd/blob/master/nais_example.yaml
-        
-   - Build and deploy you application. 
-   
+
+   - Build and deploy you application.
+
    - Checkout the  /env endpoint to see environment variables available.
-   
-   - Check Fasit to see that your exposed resource has been created. 
-   
 
-## QA
+   - Check Fasit to see that your exposed resource has been created.
 
-????
 
-I should probably say something about the configuration options in nais.yaml at some
-point.
+## Clean up
 
-Service discovery internal/external.
+Send a request to delete your application:
 
-And maybe something about our plans/dreams.  Istio(J), persistence storage, databases(SQL/NOSQL) as a service, 
-Redis As A Service. XYZ as a service. 
+```
+curl -k -S -X "DELETE" https://daemon.nais.oera-q.local/app/t1/$UNIQUENAME
+```
+
