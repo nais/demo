@@ -11,6 +11,12 @@ For å gjennomføre disse oppgavene kreves det at du har:
 
 Følg skrittene her [https://confluence.adeo.no/pages/viewpage.action?pageId=259110874](https://confluence.adeo.no/pages/viewpage.action?pageId=259110874) om du ikke har dette installert på utvikler imaget ditt allerde.
 
+
+## Hva er NAIS?
+
+NAIS står for NAV's application infrastructure service og bygger på [Kubernetes](https://kubernetes.io). I denne demoen vil du både lære å deploye en applikasjon på NAIS og noen grunnleggende operasjoner i Kubernetes.
+
+
 ## Tilgang til preprod-clusteret
 
 Sjekk at du bruker `preprod`:
@@ -40,7 +46,10 @@ Det kan hende du må skru av SSL verification:
 git config --global http.sslVerify false
 ```
 
+
 ## Docker
+
+For å kjøre applikasjoner på NAIS bruker vi [Docker](https://docker.io). Docker er en containerteknologi hvor vi kan pakke applikasjonen vår og dens avhengigheter inn i et image. Når dette imaget startes, lages det en container hvor applikasjonen kjører etter spesifikasjonene vi har definert da vi lagde imaget.
 
 ### Bygg image
 
@@ -75,7 +84,7 @@ Test imaget ditt:
 docker run -d -p 8080 docker.adeo.no:5000/$UNIQUENAME:$VERSION
 ```
 
-Se at imaget ditt kjører ved:
+Se at containeren kjører ved å liste alle kjørende containere:
 
 ```
 docker ps
@@ -147,7 +156,7 @@ Hmmm... La oss debugge statusen til applikasjonen.
 
 ### Debugging
 
-Applikasjonen din er deployet til sitt eget namespace, som har samme navn som applikasjonen, i dette tilfellet $UNIQUENAME. Du kan tenke på namespacet som et eget miljø for din app. Les mer om dette under [service discovery](https://nais.io/doc/#/dev-guide/service_discovery) i dokumentasjonen. For å debugge, må du derfor spesifisere at du skal bruke dette namespacet:
+Applikasjonen din er deployet til sitt eget namespace, som har samme navn som applikasjonen, i dette tilfellet $UNIQUENAME. Du kan tenke på namespacet som et eget miljø for din app. Les mer om dette under [service discovery](https://nais.io/doc/#/dev-guide/service_discovery) i dokumentasjonen. For å debugge må du derfor spesifisere at du skal bruke dette namespacet:
 
 ```
 kubectl config set-context preprod-sbs --namespace=$UNIQUENAME
@@ -317,4 +326,12 @@ Send a request to delete your application:
 ```
 curl -k -S -X "DELETE" https://daemon.nais.oera-q.local/app/t1/$UNIQUENAME
 ```
+
+## Videre
+
+Dokumentasjon på NAIS finner du her [https://nais.io/doc](https://nais.io/doc). 
+
+
+
+
 
