@@ -57,7 +57,7 @@ Hvis du er på Windows image, kjør `gradlew.bat build` i stedet.
 Bygg Docker imaget, pass på å bytte ut `$UNIQUENAME` med noe du vil kalle appen og `$VERSION` med feks `1.0`.
 
 ```
-docker build . -t repo.adeo.no:5443/$UNIQUENAME:$VERSION
+docker build . -t docker.adeo.no:5000/$UNIQUENAME:$VERSION
 ```
 
 Du skal nå ha et docker image tagget med Docker registrien vi skal laste det opp til. 
@@ -72,7 +72,7 @@ docker images
 Test imaget ditt:
 
 ```
-docker run -d -p 8080 repo.adeo.no:5443/$UNIQUENAME:$VERSION
+docker run -d -p 8080 docker.adeo.no:5000/$UNIQUENAME:$VERSION
 ```
 
 Se at imaget ditt kjører ved:
@@ -93,14 +93,12 @@ Eller hvis du kjører en lokal Docker daemon:
 localhost:PORT/hello
 ```
 
-Stopp containeren din:
+Stopp containeren din: `docker stop CONTAINER_ID` eller `docker stop CONTAINER_NAME`
 
-`docker stop CONTAINER_ID` eller `docker stop CONTAINER_NAME`
-
-## Push til internt NAV docker repo
+### Push til internt NAV docker repo
 
 ```
-docker push repo.adeo.no:5443/$UNIQUENAME:$VERSION
+docker push docker.adeo.no:5000/$UNIQUENAME:$VERSION
 ```
 
 ## Deploye til NAIS
@@ -124,7 +122,7 @@ team: TEAMNAVN
 Fila nais.yaml må ligge et sted hvor naisd kan få tak i den for å deploye applikasjonen din. Push fila til repo.adeo.no:
 
 ```
-curl -s -S --user uploader:<super_secret_pwd> --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml
+curl -s -S --user <username>:<password> --upload-file nais.yaml https://repo.adeo.no/repository/raw/nais/$UNIQUENAME/$VERSION/nais.yaml
 ```
 
 ### Deploy
@@ -132,71 +130,77 @@ curl -s -S --user uploader:<super_secret_pwd> --upload-file nais.yaml https://re
 Nå som vi har pushet manifestet nais.yaml og docker imaget til appen vår, er vi klare til å deploye. Dette gjør vi ved en POST request til naisd:
 
 ```
-curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "fasitEnvironment": "t6", "zone": "sbs", "fasitUsername": "brukernavn", "fasitPassword": "passord", "skipFasit": "true"}' https://daemon.nais.oera-q.local/deploy
+curl -s -S -k -d '{"application": "$UNIQUENAME","version": "$VERSION", "fasitEnvironment": "t6", "zone": "sbs", "fasitUsername": "brukernavn", "fasitPassword": "passord", "skipFasit": true}' https://daemon.nais.oera-q.local/deploy
 ```
 
-You might get a error here. Which brings us to FASIT part 1. 
+Responsen lister opp hvilke Kubernetes-ressurser som blir opprettet for applikasjonen din (deployment, secret, ingress, autoscaler).
 
- -  Your application needs to be registered in Fasit. So head over to fasit.adeo.no 
-    and create an application with the same name as $UNIQUENAME. 
+Sjekk statusen på deploymenten din
 
- -  Rerun your curl to the daemon. 
+```
+curl -k https://daemon.nais.oera-q.local/deploystatus/default/$UNIQUENAME
 
-    You should get a response about kubernetes resources being created. (deployment, secret, ingress, autoscaler)
+```
 
- - Check the status of your deployment
+Hmmm... La oss debugge statusen til applikasjonen.
 
-        curl -k https://daemon.nais.oera-q.local/deploystatus/demo/$UNIQUENAME
 
-   Hmmm. 
+### Debugging
 
- - Lets debug the status of your application.
- 
-    Switch to the preprod-sbs cluster:
-        
-        kubectl config use-context preprod-sbs  
-    
-    Set namespace demo as the current namesspace: 
-    
-        kubectl config set-context preprod-sbs --namespace=demo  
-        
-    Get all pods in the current context(cluster) and namespace demo: 
-    
-        kubectl get pod 
-    
-    You should see your pods but they are not in a Running state. Thats bad.
-    You can get list of events for your pod. And an indication of why the pod is failing:
-    
-        kubectl describe pod "your-pod-name"  
+Applikasjonen din er deployet til sitt eget namespace, som har samme navn som applikasjonen, i dette tilfellet $UNIQUENAME. Du kan tenke på namespacet som et eget miljø for din app. Les mer om dette under [service discovery](https://nais.io/doc/#/dev-guide/service_discovery) i dokumentasjonen. For å debugge, må du derfor spesifisere at du skal bruke dette namespacet:
 
-    Note that kubernetes is killing your pod because the endpoint /isAlive is responding with 404. 
+```
+kubectl config set-context preprod-sbs --namespace=$UNIQUENAME
+```
 
-    At this point I should probably say something about liveness, readyness and nais.yaml. 
+Sjekk deploymenten:
 
-    tldr; You application needs to respond with 200 at the default endpoints /isAlive and /isReady.
+```
+kubectl get deployment
+```
 
-  - Open your favorite editor and implment a /isAlive and a /isReady endpoint which responds with a 200 OK.
+Denne kommandoen lister opp alle deployments i dette namespacet. I dette tilfellet er det kun en, din app. Den er navngitt `app` og videre bortover lister den opp `desired`, `current`, up-to-date` og `available` pods. Under `available` står det 0. La oss se videre på disse.
 
-  - Build the application and docker container. Push the new docker container and nais.yaml to their respective
-    repositories using curl. Remember to increment the version. 
+```
+kubectl get pods
+```
 
-  - Deploy the new version to NAIS.
+Her ser du at statusen på podene ikke er `Running`. Beskriv en av dem for å liste opp eventene for poden og få en indikasjon på hva som feiler, husk å erstatte PODNAVN med et av navnene listet opp av kommandoen over:
 
-  - Check the status of your pods. They should be now in a running state.
-    A few kubectl commands to check your pods.
-    
-        kubectl logs YOUR-POD-NAME
-    
-        kubectl top pod
-        
-        kubectl get all -l app=$UNIQUENAME  
+```
+kubectl describe pod PODNAVN
+```
 
- - But... where is my app running
- 
-        kubectl get ingress $UNIQUENAME 
-   should give you a hint. Notice that even if the ingress is exposing port 80, the app is behind a BigIP load balancer and can only be reached with HTTPS.
+Her kan du se at endepunktet /isAlive svarer med 404, som resulterer i at Kubernetes dreper poden. Applikasjonen din må svare med statuskode 200 på endepunktene `/isAlive` og `isReady`. Disse endepunktene bruker Kubernetes til å sjekke statusen til podene. Når /isAlive svarer med en feilkode anser Kubernetes containeren i poden som unhealthy og dreper den. Endepunktet /isReady bruker Kubernetes til å sjekke om containeren er klar til å ta imot trafikk.
 
-   Congratulations your app is now running in NAIS.
+Åpne din favoritteditor og implementer en /isAlive og en /isReady som begge svarer med en 200 OK. Når du har gjort det, bygg et nytt docker image med en ny tag, f.eks `2.0`. Push det slik som du gjorde med første versjon.
+
+Deploy den nye versjonen til NAIS, ved å gjenta requesten du gjorde tidligere. Husk å oppdatere versjon i payloaden.
+
+Sjekk statusen på deployment og pods på nytt. Nå burde disse være oppe å kjøre.
+
+Her er noen andre kommandoer du kan teste for å inspisere:
+
+```
+# se loggene i en container
+kubectl logs PODNAVN
+# se ressursene podene bruker
+kubectl top pods
+# hent alle ressursene i Kubernetes for applikasjonen din, de har labelen app=$UNIQUENAME
+kubectl get all -l app=$UNIQUENAME
+```
+
+### Ingress
+
+Nå som du har deployet en sunn og fin app er neste skritt å kunne nå den fra f.eks nettleseren. Se på ingress-ressursen til appen:
+
+```
+kubectl get ingress
+```
+
+Prøv å adressen som står under HOSTS via nettleseren. Gikk det ikke? Selv om ingressen eksponerer port 80 kan appen kun nås med HTTPS. Dette er fordi appen er bak en BigIP load balancer. Prøv å nå samme adressen på HTTPS. Du skal nå kunne se "Hello, World!". 
+
+Gratulerer, appen din kjører nå i NAIS! 🎉
 
 
 ## Monitoring and logging 
@@ -274,6 +278,17 @@ search and visualize capabilities in Kibana.
 
 
 ## Fasit
+
+Her får du statuskode 400 tilbake. Dette er på grunn av FASIT.
+
+- Applikasjonen din må være registrert i FASIT for å kunne deployes 
+
+You might get a error here. Which brings us to FASIT part 1. 
+
+ -  Your application needs to be registered in Fasit. So head over to fasit.adeo.no 
+    and create an application with the same name as $UNIQUENAME. 
+
+ -  Rerun your curl to the daemon. 
 
 ### Using/Exposing Fasit resources. 
 
