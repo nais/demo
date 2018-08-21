@@ -154,6 +154,17 @@ curl -k https://daemon.nais.oera-q.local/deploystatus/default/$UNIQUENAME
 Hmmm... La oss debugge statusen til applikasjonen.
 
 
+## Kubernetes
+
+Vi skal nå se litt mer på Kubernetes. Mens Docker er containerteknologien vi bruker for å pakke appen vår inn i er Kubernetes teknologien som holder styr på containerene. Kubernetes vet hvilke containere som er kjørende, healthy og hvor mange instanser som kjører. 
+
+Kubernetesressursen som holder på containeren kaller vi en Pod. En Pod inneholder en, eller flere, containere og informasjon om hvilket docker image som skal kjøres og environment variablene som trengs. Ofte kjører vi opp containeren for applikasjonen vår i flere pods, slik at det er flere instanser av samme applikasjon kjørende samtidig.
+
+Ressursen som kontrollerer Pods heter Deployment. En Deployment inneholder en spesifikasjon på hvordan vi vil ha våre pods, altså både Docker-imaget, environment variabler og antallet pods vi vil ha kjørende. Kubernetes vil da lage enda en type ressurs, som kalles ReplicaSet. Deploymenten holder styr på ReplicaSetet, som igjen styrer Podene. ReplicaSetet får informasjon fra Deploymenten om antall Pods som er ønsket og oppretter dette.
+
+Hvis vi endrer Deploymenten, for eksempel ved å endre versjon av Docker imaget som kjøres, opprettes det et nytt ReplicaSet med den oppdaterte informasjonen. Det gamle ReplicaSetet får beskjed om å skalere ned sine Pods, mens det nye får beskjed om å skalere opp. Kubernetes gjør dette på en måte som kontrollerer at det til en hver tid, så langt det lar seg gjøre, er minst en kjørende og healthy Pod. Slik får vi nedefri deploytid.
+
+
 ### Debugging
 
 Applikasjonen din er deployet til sitt eget namespace, som har samme navn som applikasjonen, i dette tilfellet $UNIQUENAME. Du kan tenke på namespacet som et eget miljø for din app. Les mer om dette under [service discovery](https://nais.io/doc/#/dev-guide/service_discovery) i dokumentasjonen. For å debugge må du derfor spesifisere at du skal bruke dette namespacet:
@@ -168,7 +179,7 @@ Sjekk deploymenten:
 kubectl get deployment
 ```
 
-Denne kommandoen lister opp alle deployments i dette namespacet. I dette tilfellet er det kun en, din app. Den er navngitt `app` og videre bortover lister den opp `desired`, `current`, up-to-date` og `available` pods. Under `available` står det 0. La oss se videre på disse.
+Denne kommandoen lister opp alle deployments i dette namespacet. I dette tilfellet er det kun en, din app. Den er navngitt `app` og videre bortover lister den opp `desired`, `current`, `up-to-date` og `available` pods. Under `available` står det 0. La oss se videre på disse.
 
 ```
 kubectl get pods
