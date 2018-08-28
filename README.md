@@ -191,7 +191,7 @@ Her ser du at statusen på podene ikke er `Running`. Beskriv en av dem for å li
 kubectl describe pod PODNAVN
 ```
 
-Her kan du se at endepunktet /isAlive svarer med 404, som resulterer i at Kubernetes dreper poden. Applikasjonen din må svare med statuskode 200 på endepunktene `/isAlive` og `isReady`. Disse endepunktene bruker Kubernetes til å sjekke statusen til podene. Når /isAlive svarer med en feilkode anser Kubernetes containeren i poden som unhealthy og dreper den. Endepunktet /isReady bruker Kubernetes til å sjekke om containeren er klar til å ta imot trafikk.
+Her kan du se at endepunktet `/isAlive` svarer med `404`, som resulterer i at Kubernetes dreper poden. Applikasjonen din må svare med en statuskode under 400 på endepunktene `/isAlive` og `/isReady`. Disse endepunktene bruker Kubernetes til å sjekke statusen til podene. Når /isAlive svarer med en feilkode anser Kubernetes containeren i poden som unhealthy og dreper den. Endepunktet /isReady bruker Kubernetes til å sjekke om containeren er klar til å ta imot trafikk.
 
 Åpne din favoritteditor og implementer en /isAlive og en /isReady som begge svarer med en 200 OK. Når du har gjort det, bygg et nytt docker image med en ny tag, f.eks `2.0`. Push det slik som du gjorde med første versjon.
 
@@ -223,34 +223,39 @@ Prøv å adressen som står under HOSTS via nettleseren. Gikk det ikke? Selv om 
 Gratulerer, appen din kjører nå i NAIS! 🎉
 
 
-## Monitoring and logging 
+## Monitorering og logging 
 
-### Monitoring with Prometheus
+### Monitorering med Prometheus
 
-If your app provides Prometheus metrics. The platform will collect the metrics
-and you will be able to visualize the metrics and set up alerts in grafana.
-We will also provide default dashboards for your application.
+Hvis appen din støtter Prometheus-metrics vil plattformen samle metrikkene og du kan visualisere dem og sette opp alerts i Grafana. Du får også et dashboard for applikasjonen din.
 
-Lets add some  metrics to your application.
-
- - Add the following compile dependencies to the demo application. In build.gradle:
+Legg til disse avhengighetene i demo-applikasjonen. I fila `build.gradle`:
  
+
+  ``` 
        compile("io.prometheus:simpleclient_spring_boot:0.0.26")
 
        compile("io.prometheus:simpleclient_hotspot:0.0.26")
+  ```
 
+Annoter main-classen for å samle metrics:
  
  - Autoconfigure, enable a metrics endpoint and collect some metrics using by annotating the main class
    with the following annotations.
  
+   ```
         @EnablePrometheusEndpoint
 
         @EnableSpringBootMetricsCollector
+   ```
+ 
+Kjør opp demo-appen for å verifisere at JVM-metrics blir hentet:
 
- 
- - Run the demo app and verify that jvm metrics are collected:
- 
+   
+   ```
         localhost:8080/prometheus
+   ```
+
 
 ### Logging
 
@@ -301,14 +306,10 @@ search and visualize capabilities in Kibana.
 
 Her får du statuskode 400 tilbake. Dette er på grunn av FASIT.
 
-- Applikasjonen din må være registrert i FASIT for å kunne deployes 
+- Applikasjonen din må være registrert i FASIT. Ta turen innom fasit.adeo.no og lag en applikasjon med samme navn som $UNIQUENAME.
 
-You might get a error here. Which brings us to FASIT part 1. 
+- Kjør curl til naisd en gang til for å deploye.
 
- -  Your application needs to be registered in Fasit. So head over to fasit.adeo.no 
-    and create an application with the same name as $UNIQUENAME. 
-
- -  Rerun your curl to the daemon. 
 
 ### Using/Exposing Fasit resources. 
 
@@ -330,9 +331,9 @@ You can also expose resources.
    - Check Fasit to see that your exposed resource has been created.
 
 
-## Clean up
+## Opprydding
 
-Send a request to delete your application:
+For å slette applikasjonen din, send en DELETE-request til naisd:
 
 ```
 curl -k -S -X "DELETE" https://daemon.nais.oera-q.local/app/t1/$UNIQUENAME
