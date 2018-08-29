@@ -259,16 +259,21 @@ Kjør opp demo-appen for å verifisere at JVM-metrics blir hentet:
 
 ### Logging
 
+Det som logges til `stdout` blir logget og visualisert i Kibana. 
+Hvis du logger i et JSON-format vil vi i tillegg indeksere loggene og tilby et kraftigere søk.
 Log to stdout. And we will collect them for you and visualize them in Kibana.
 Log to stdout and in a json format and we will collect them, index them and provide even more powerful
 search and visualize capabilities in Kibana.
 
- - Add a logstash json encoder to the application. In build.gradle:
- 
-        runtime("net.logstash.logback:logstash-logback-encoder:4.10")
- 
- - Add the following logback.xml to the resources folder:
+ - Legg til en logstasj JSON encoder i applikasjonen. I `build.gradle`:
 
+```
+runtime("net.logstash.logback:logstash-logback-encoder:4.10")
+```
+
+- Lag fila `src/main/resources/logback.xml` med dette innholdet: 
+ 
+```
         <configuration>
             <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
                 <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
@@ -277,29 +282,33 @@ search and visualize capabilities in Kibana.
                 <appender-ref ref="stdout_json" />
             </root>
         </configuration>
+```
 
-  - Run the application and verify that you get some logs messages to stdout in json format.
+- Kjør applikasjonen på nytt og verifiser at du får logg-meldinger til stdout i JSON-format.
 
-### Putting it all together:
 
-   - Modify nais.yaml to enable prometheus scraping:
+### Deploy med logging og metrikker
 
+   - Endre `nais.yaml` for å skru på prometheus-scraping: 
+
+  ```
          image: docker.adeo.no:5000/$UNIQUENAME
          prometheus: 
            enabled: true
            path: /prometheus
+  ```
+  
+   - Logging er allerede aktivert (det er standardvalget)
 
-   - Logging is enabled by default.
+   - Bygg appen, Docker image og push imaget og nais.yaml på nytt. Husk å øke versjonsnummeret
 
-   - Build application, docker image and push your image and nais.yaml. Remember to increase version.
+   - Kjør nytt deploy-kall med den nye versjonen
 
-   - Deploy the new version.
+   - Verifiser at den nye versjonen kjører i clusteret
 
-   - Verify that your new version is up and running.
+   - Sjekk ut [https://grafana.adeo.no/dashboard/db/nais-app-dashboard](https://grafana.adeo.no/dashboard/db/nais-app-dashboard) og verifiser at metrikkene dine blir scraped
 
-   - Checkout https://grafana.adeo.no/dashboard/db/nais-app-dashboard to verify that your metrics are being scraped
-
-   - CHeckout https://logs.adeo.no to verify that logs are being indexed.
+   - Sjekk ut [https://logs.adeo.no](https://logs.adeo.no) for å verifisere at loggene blir indeksert
 
 
 ## Fasit
@@ -311,24 +320,20 @@ Her får du statuskode 400 tilbake. Dette er på grunn av FASIT.
 - Kjør curl til naisd en gang til for å deploye.
 
 
-### Using/Exposing Fasit resources. 
+### Bruke Fasit-ressurser 
 
-You can specify which Fasit resources your application is using and the platform will fetch the
-resources and inject them as environment variables into your pods.
-You can also expose resources.
+Du kan spesifisere hvilke Fasit-ressurser applikasjonen din bruker. NAIS-plattformen vil hente ressurene og tilgjengeliggjøre dem for applikasjonen som miljøvariabler i Podene.
+Du kan også eksponere ressurser.
 
+- Legg til en ressurs for applikasjonen i Fasit
 
-   - In Fasit add a a resource to your application
+- Endre `nais.yaml` for å konsumere/eksponere ressurser. Se [https://github.com/nais/naisd/blob/master/nais_example.yaml](https://github.com/nais/naisd/blob/master/nais_example.yaml)
 
-   - Modify nais.yaml to consume/expose resources. See:
+- Bygg og deploy applikasjonen din med de nye Fasit-ressursene
 
-        https://github.com/nais/naisd/blob/master/nais_example.yaml
+- Kjør en curl mot endepunktet `/env` for å se environment-variablene tilgjengelig
 
-   - Build and deploy you application.
-
-   - Checkout the  /env endpoint to see environment variables available.
-
-   - Check Fasit to see that your exposed resource has been created.
+- Sjekk ut Fasit for å verifisere at din eksponerte ressurs har blitt opprettet
 
 
 ## Opprydding
@@ -342,8 +347,6 @@ curl -k -S -X "DELETE" https://daemon.nais.oera-q.local/app/t1/$UNIQUENAME
 ## Videre
 
 Dokumentasjon på NAIS finner du her [https://nais.io/doc](https://nais.io/doc). 
-
-
 
 
 
