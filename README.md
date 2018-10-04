@@ -261,9 +261,6 @@ Kjør opp demo-appen for å verifisere at JVM-metrics blir hentet:
 
 Det som logges til `stdout` blir logget og visualisert i Kibana. 
 Hvis du logger i et JSON-format vil vi i tillegg indeksere loggene og tilby et kraftigere søk.
-Log to stdout. And we will collect them for you and visualize them in Kibana.
-Log to stdout and in a json format and we will collect them, index them and provide even more powerful
-search and visualize capabilities in Kibana.
 
  - Legg til en logstasj JSON encoder i applikasjonen. I `build.gradle`:
 
